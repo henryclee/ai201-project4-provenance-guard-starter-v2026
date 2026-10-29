@@ -71,7 +71,7 @@ so that all 3 labels are used.
 ---
 
 ## 4.
-For 5 of 5 valid appeals, the status always changes in the log.
+For 5 of 5 valid appeals, the appeal always changes the status.
 
 **Why this target:**
 This target should be algorithmic, and thus should never fail.

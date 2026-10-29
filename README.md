@@ -168,6 +168,104 @@ someone to do on purpose.
 <!-- One submission and one appeal, pasted as text: the request, the response,
      and the log entries. -->
 
+**Milestone 3 sample run**
+
+```bash
+curl -X POST http://127.0.0.1:5000/submit \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This text is a sterling example short prose that is unequivocally written by a human. It must be clear that no machine, even in an insane bout of high temperature rambling, could have come up with it. It should have sentences of varying length, unexpected word choices, and some literary surprise. Short sentences. Sentences of medium length. And sentences that are so long that a reader might become fatigued reading it, perhaps wondering in desperation whether hopefully, eventually, the sentence might end.", "creator_id": "a_human"}'
+```
+
+```json
+{
+  "confidence": 0.0,
+  "content_id": "5d9d046c-9155-4574-a481-cf17f587abc9",
+  "guess": "human",
+  "label": "placeholder",
+  "model_score": 0.3488,
+  "style_score": 0.0
+}
+```
+
+```bash
+curl -X POST http://127.0.0.1:5000/submit \
+  -H "Content-Type: application/json" \
+  -d '{"text": "The implementation of the proposed framework requires careful consideration of several key factors. First, it is important to note that the system must be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables.", "creator_id": "ai"}'
+```
+
+```json
+{
+  "confidence": 0.0,
+  "content_id": "48dceef0-ccee-4f0b-a28a-7bbe76565a34",
+  "guess": "AI",
+  "label": "placeholder",
+  "model_score": 0.8326,
+  "style_score": 0.0
+}
+```
+
+```bash
+curl -X POST http://127.0.0.1:5000/submit \
+  -H "Content-Type: application/json" \
+  -d '{"text": "The implementation of the proposed framework carefully consider several key factors. Firstly, it is critical that the system be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables.", "creator_id": "human+ai"}'
+```
+
+```json
+{
+  "confidence": 0.0,
+  "content_id": "2d871414-9281-45db-a2b8-52eaf09c2e9f",
+  "guess": "AI",
+  "label": "placeholder",
+  "model_score": 0.7016,
+  "style_score": 0.0
+}
+```
+
+```bash
+curl -X GET http://127.0.0.1:5000/log
+```
+
+```json
+{
+  "count": 3,
+  "entries": [
+    {
+      "combined_score": 0.0,
+      "content_id": "31364310-87d5-4ff4-878d-3b353d2463ec",
+      "creator_id": "a_human",
+      "guess": "human",
+      "label": "placeholder",
+      "model_score": 0.3488,
+      "status": "placeholder",
+      "style_score": 0.0,
+      "timestamp": "2026-10-29T20:46:45+00:00"
+    },
+    {
+      "combined_score": 0.0,
+      "content_id": "c9b6fccf-14b7-4d43-85ca-7dfed9549860",
+      "creator_id": "ai",
+      "guess": "AI",
+      "label": "placeholder",
+      "model_score": 0.8326,
+      "status": "placeholder",
+      "style_score": 0.0,
+      "timestamp": "2026-10-29T20:46:55+00:00"
+    },
+    {
+      "combined_score": 0.0,
+      "content_id": "86c68209-3385-4aaa-bd60-203d58901eaa",
+      "creator_id": "human+ai",
+      "guess": "AI",
+      "label": "placeholder",
+      "model_score": 0.7016,
+      "status": "placeholder",
+      "style_score": 0.0,
+      "timestamp": "2026-10-29T20:47:02+00:00"
+    }
+  ]
+}
+```
+
 **A submission**
 
 <!-- The response needs content_id, guess, confidence, label, AND both
