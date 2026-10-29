@@ -38,8 +38,33 @@
 
 <!-- The path a submission takes, from arriving to the label a reader sees.
      Six or seven steps — this is the trace you wrote in Milestone 1. -->
+1. The writer submits a post to app.py::submit
+2. The payload is validated, and the text and creator_id are extracted
+3. The text is sent to detector.model_signal and a score for the text is retrieved (first signal)
+4. The text is sent to stylometry.style_signal, and a score for the text is retrieved (second signal)
+5. The scores are combined into a single score
+6. The signal scores and the combined scores are logged, along with content_id for possible appeal
+7. The score is converted into a label, which is then returned to the user
 
+---
 
+## Endpoint Shapes
+
+### POST /submit
+     Expects JSON:
+          {"text": "...", "creator_id": "..."}
+
+     Should return JSON with a shape of:
+          {"content_id": "...", "guess": "...", "confidence": 0.0, "label": "...",
+          "model_score": 0.0, "style_score": 0.0}
+
+### POST /appeal
+
+     Expects JSON:
+          {"content_id": "...", "reasoning": "..."}
+
+     Should return JSON with:
+          {"message": "..."} or 404 if content_id doesn't exist
 
 ---
 
@@ -54,18 +79,47 @@
 ### Signal one — the model signal
 
 **What it measures:**
+This is the signal that "reads the text for meaning". It runs a language model
+on your own machine and asks one question: how predictable is this text?
+
+The idea is the one every AI-detection product is built on. A language model
+writes by repeatedly picking a likely next word, so text a model produced tends
+to be text a model finds easy to predict. Human writing wanders more — odd word
+choices, abrupt turns, the specific rather than the typical.
+
+The measure is called perplexity. Low perplexity means "I could have
+guessed this"; high perplexity means "that surprised me". This module turns
+that into a 0–1 score where higher means more likely AI.
 
 **Why that might differ between human and AI writing:**
+Human writing with dense, ornate prose, or using rare words, is less likely to to be flagged 
+as AI because those are the words that the model is least likely to predict.
 
 **What it can't see:**
+Predictability is not the same thing as authorship. What this signal actually flags as AI 
+is common words in short, ordinary sentences — and plenty of real people write that way.
+
+Someone writing in a second language, sticking to vocabulary they're sure of.
+A younger writer. Anyone writing plainly on purpose. Measured against gpt2,
+writing like that scores about as machine-like as machine writing does.
 
 ### Signal two — the style signal
 
 **What it measures:**
+style_signal measures how human the style of the writing is, as defined by three metrics. The
+metrics used are sentence length spread, type token ratio, and punctuation density/variety. The
+premise is that AI written prose is more likely to have even, mid-length sentences, with a narrower
+band of vocabulary, and presumably follow punctuation rules precisely.
 
 **Why that might differ between human and AI writing:**
+Generated prose tends toward even, mid-length sentences and a narrower band of vocabulary, because
+that's what "most likely next word" produces on average. Human writing is lumpier — a three-word 
+sentence next to a forty-word one.
 
 **What it can't see:**
+Anything that changes the shape without changing the substance moves it — adding typos,
+breaking up sentences, pasting in a quotation. That is a very cheap thing for
+someone to do on purpose.
 
 ### The combining rule
 

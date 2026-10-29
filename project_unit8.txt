@@ -1,0 +1,339 @@
+Show What You Know: Provenance Guard, Part 2 — Testing
+In the previous unit, you built a service and wrote down what "working" would mean. You filed those five criteria before you had any results.
+
+In this unit somebody attacks it.
+
+First you add the two things that let you see an attack at all — a limit on how fast one person can submit, and a log that records enough to reconstruct what happened. Without those, an attack looks like nothing.
+
+Then you run an attack set: a file of inputs written by staff, designed to get your system to do something it shouldn't. You didn't write it and you don't get to see it until Milestone 2. That's the point. Every test so far has been you checking your own work against your own imagination.
+
+Missing your own targets does not cost you points. A service that fails every attack, with a clear explanation of each failure, earns full marks. What's graded is whether you tested honestly and understood what broke.
+
+
+🎯 Goals
+By the end of this unit you'll be able to:
+
+Add rate limiting and structured logging to a running service
+Run an attack you didn't design and read what it did to you
+Test a system with repeated trials rather than one pass
+Say what you'd fix, what you wouldn't, and why
+
+📖 Words you'll need
+Term	What it means
+Rate limit	A cap on how many requests one caller may send in a period.
+429	The status code a service returns when a caller has hit the limit.
+Audit log	A record of every decision, kept so you can reconstruct it later.
+Red team	People trying to break a system on purpose, to find problems before real users do.
+Attack set	A file of inputs built to make a system fail in specific ways.
+Prompt injection	Text written to be read as instructions by a model rather than as content.
+Evasion	Getting past a detector by changing the input rather than the system.
+
+📦 What proves you did the work
+Three things, added to the repo you submitted in the previous unit.
+
+A run log — your five criteria, three trials each, before your fix and after it.
+A verdict and a diagnosis — met or missed per criterion, and what caused every miss.
+Your audit log — at least ten entries covering the attack run, pasted as text.
+
+✅ Features
+Required Features
+
+Rate limiting on /submit. You choose the numbers. Your README says why those numbers and not others.
+
+
+A complete audit log. Every decision records timestamp, content id, creator id, the guess, both signal scores, the combined score, the label given, and the current status.
+
+
+The attack set run in full. Every input, with what your system returned for each.
+
+
+Three trials per criterion. One run isn't a test. Your first signal calls a model, so the same input can score differently twice.
+
+
+A verdict and a diagnosis for each of your five criteria. Met or missed against the previous unit's target, and for every miss, which part of the pipeline and how. "It failed the attack" isn't a diagnosis.
+
+
+One improvement, made and measured. Change one thing, re-run the attack set, and put both result sets side by side. Then say what you'd fix next and why you stopped there.
+
+Stretch Features
+Optional, for extra credit. Say what you're adding in your README before you start.
+
+Write three attacks of your own against someone else's system, and report what they did.
+A second improvement, measured the same way.
+Per-creator limits rather than per-address ones, with a note on what that changes.
+⚠️ One rule about changing your system. The rate limiter, the log, and your one improvement are the only changes in this unit — nothing else moves. Your one improvement may be a change to a signal, a weight, a threshold or a label if that is what your diagnosis points at (Milestone 5 lists those options). What isn't allowed is changing them on the side, in addition to the improvement, so that the before and after can't be compared.
+
+
+RUNNING.md in your repo has every command and the full troubleshooting table. Two entries there are this unit's: GET /health reports whether rate limiting is actually on, and rejected requests are logged for you.
+
+The attack set arrives as a zip you unpack and run with run_attacks.py in Milestone 2. Don't go looking for it early. Reading it in advance and patching for it gives you a clean run and nothing to diagnose, which costs more points than the failures would have.
+
+If your service from the previous unit won't run, talk to your TF before the deadline.
+
+
+
+Milestone 1: Add the limit and finish the log
+⏰ ~65 min · start in your breakout
+
+You added both of these alongside the instructor in the first half of class. Now add them to your own service.
+
+These are the instruments. An attack that floods your endpoint is invisible without a limiter, and an attack that slips past your detector is invisible without a log that recorded the scores.
+
+
+Turn rate limiting on for /submit. Three steps: set RATE_LIMITING_ENABLED = True in config.py, choose your per-minute and per-day numbers there, and uncomment the @limiter.limit(...) line above submit in app.py.
+
+Pick the numbers yourself. Think about a real writer submitting their own work, then about a script trying to map your thresholds by sending a thousand variations.
+
+
+Test it:
+
+python run_attacks.py --flood 15
+That sends 15 submissions from one creator_id and prints the run of status codes — 200 200 200 ... 429 429 — which is exactly what your README's Rate Limiting section asks you to paste. It also writes results/flood_<date>.md.
+
+No 429 at all? Either your limit is above 15 a minute, or limiting is still off. GET /health reports which.
+
+
+Finish the audit log. Every decision now records all nine fields listed above. Check one entry in logs/audit.jsonl by eye — could someone reconstruct a decision from it without your code?
+
+
+Rejections are logged for you, and it's worth knowing why: an attack that shows up only as an absence is one you'll never find. A thousand requests that got a 429 and left no trace look exactly like a quiet afternoon. Confirm GET /log returns everything by submitting three pieces of text and reading the entries back.
+
+🛑 If you're stuck
+
+Limiter not triggering after 45 minutes? Two usual causes: the decorator is uncommented but RATE_LIMITING_ENABLED is still False in config.py — GET /health tells you — or every request looks like it's from a different caller.
+
+Can't make it work at all? Write a plain counter in your own code — count requests per creator per minute and return a 429 yourself. That's a legitimate rate limiter and everything after this milestone works with it.
+
+📍 Before you move on
+
+Your limiter returns 429 when pushed. Your log has all nine fields and records rejections. Commit.
+
+
+
+Milestone 2: Run the attack set
+⏰ ~55 min
+
+Download the attack set and run every input through your service.
+
+Some are trying to slip AI text past your detector. Some are trying to get real writing flagged. Some carry instructions aimed at the model inside your first signal. A few just send junk to see what your service does with it.
+
+Run them all before you fix anything. The first pass is the measurement.
+
+
+Get the attack set from your TF. It arrives as a zip that unpacks to a folder holding attacks.csv and attacks_malformed_requests.csv. Put the folder in your repo. Read the header row, then stop reading. Run it:
+
+python run_attacks.py --set <folder>
+With your service running in the other terminal. It sends every input through POST /submit and records what came back for each: the score, both signal scores, the label, and the status code. Output lands in results/.
+
+The attack set won't trip your rate limiter, and that's deliberate. Every attack row submits under its own creator_id, so a full run looks like forty-odd different callers no matter how long it is. That's why the flood test in Milestone 1 is a separate thing.
+
+
+Mark each one held or broke. The set says what each attack was going for, so you can tell whether it got there. Count them.
+
+
+Pull your audit log for the whole run and paste at least ten entries into your README. Choose entries that show the interesting failures, not the ten easiest ones. Then pick the single worst outcome — the one you'd least want to explain to a writer whose work got caught by it.
+
+💬 Talk this through
+
+In your breakout: bring your worst failure. Share the input and what your system returned, and stop there — don't say what you think caused it.
+
+Let your group guess which part of your pipeline let it through, then say whether they were right. Being wrong about your own system in front of other people is how this unit teaches.
+
+Working on your own? Paste the attack input, your system's response, and both signal scores into Claude and ask:
+
+"Here is an input that got past my detector, what my system returned, and the score each of my two signals gave it. Give me three possible causes at different stages of my pipeline. Don't tell me which is most likely."
+
+Then work out which one it actually was. That part is yours, and it's the graded part.
+
+🛑 If you're stuck
+
+Service crashing partway through the set? That's a result, not a blocker. Record which input killed it and what the error was, then skip that one and keep going.
+
+A crash on a malformed input is one of the most common real failures there is, and you now have it documented.
+
+📍 Before you move on
+
+Every attack has a recorded outcome and a held-or-broke mark. Ten log entries are in your README. Commit.
+
+
+
+Milestone 3: Run your own five criteria
+⏰ ~45 min
+
+The attack set tests what staff thought to test. Your criteria test what you thought to test. Both count, and they rarely overlap much.
+
+Three trials each. Your first signal calls a model, so identical input can give a different score twice.
+
+
+Work out what each criterion needs and put those scenarios in scenarios.py — that file is what run_eval.py executes, and it ships empty for you to fill in. One criterion about false positives needs your own writing. One about label coverage needs inputs across the score range.
+
+
+Run everything three separate times, changing nothing in between:
+
+python run_eval.py --label before
+It runs each scenario three times and saves the real output to results/. Then fill in your run log. Every test unit in this course uses the same format — one row for each of your five criteria, a column per run, and a verdict. A table with fewer than five rows isn't a complete run log:
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. My own writing flagged as AI | ≤ 1 of 10 | 2/10 | 1/10 | 2/10 | MISSED |
+| 2. All three labels reachable | 3 of 3 | 3/3 | 3/3 | 3/3 | MET |
+| 3. Appeal always changes status | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Empty text returns a 400, not a 500 | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Every decision appears in the audit log | 20 of 20 | 20/20 | 20/20 | 19/20 | MISSED |
+
+Under the table, paste real output for each criterion from one of the runs. The actual JSON, not a description of it. Name the file and function that produced it.
+
+📍 Before you move on
+
+Five criteria, three trials each, with pasted output underneath. Commit.
+
+If a criterion involving your first signal came out identical three times, check you're really re-running.
+
+
+
+Milestone 4: Call each criterion and diagnose every miss
+⏰ ~50 min
+
+Say met or missed against the previous unit's targets. Then work out why.
+
+The verdict sounds like the easy part. It's the part people get wrong, because "met" is more comfortable and there's always a generous reading.
+
+
+Write MET or MISSED next to each criterion. If your target said at most 1 in 10 and your trials came out 2, 1, 2 — that's a miss. The target has to hold, not turn up sometimes.
+
+
+For each miss, and for every broken attack, name the stage and the mechanism. Your service has five: the route, signal one, signal two, the combining rule, and the label mapping.
+
+Not a diagnosis:
+
+"The evasion attacks got through."
+
+A diagnosis:
+
+"Four evasion inputs got through. All four had typos added to AI-generated text. My second signal measures sentence length spread and word variety, and typos raise word variety — so the signal read them as more human. My combining rule weights that signal at 0.6, so it dragged the whole score down. The stage is signal two; the mechanism is that typos look like variety to it."
+
+
+Look for a pattern across the misses. If five failures all involve the same signal, that's one problem, not five. Patterns are worth more than individual explanations. If you held everything, say so — then say honestly whether your targets were low, and name the criterion you'd tighten.
+
+A note on changing a criterion
+
+Sometimes a criterion turns out to be broken rather than unmet. That's a real finding and it earns credit. Only one kind of change counts.
+
+✅ This earns points. The criterion couldn't be measured:
+
+Original: "The system handles uncertain cases well." Revised: "Text I judged borderline scores between 0.4 and 0.6 in at least 4 of 5 cases." Why: "well" gave me nothing to check. I couldn't reach a verdict from it.
+
+❌ This does not. The criterion was fine; you missed it:
+
+Original: "At most 1 of 10 of my own pieces flagged as AI." Revised: "At most 3 of 10 flagged as AI." Why: 1 of 10 turned out to be hard.
+
+If you revise, leave the original line and put the new one underneath with your reason. Never delete the original.
+💬 Talk this through
+
+In your breakout: bring the criterion whose number surprised you most, and say what you expected. Then ask whether your verdict sounds right. Someone reading your criterion cold catches a generous reading faster than you will.
+
+Working on your own? Paste the criterion, the target, your three trials, and your verdict into Claude and ask:
+
+"Here is my criterion, my target, my three runs, and the verdict I reached. Argue the opposite verdict as strongly as you can, then tell me what evidence would settle it either way. Don't tell me which verdict is correct."
+
+If the argument against you is any good, look again — and if it names evidence you could actually go and get, go and get it.
+
+📍 Before you move on
+
+Every criterion has a verdict and a sentence on how you decided. Every miss names a stage and a mechanism. Commit.
+
+
+
+Milestone 5: Fix one thing and re-run
+⏰ ~50 min
+
+Pick one thing your diagnosis pointed at, change it, and run the attack set again.
+
+One change, measured properly, beats four you can't tell apart. You will want to patch every hole. Don't.
+
+
+Pick your improvement. These are the four most likely to move the numbers:
+
+Reweight your signals. If one signal is doing the damage, change how much it counts and say by how much.
+
+Move a threshold. If real writing is landing in the high-confidence AI band, widen the unsure band. Say what that costs on the other side.
+
+Validate the input. If a malformed input crashed your route, check the input before the signals see it.
+
+Strip instructions from the text. If injected text reached your model as instructions, treat the submission as data before you send it.
+
+Or something else your diagnosis named. Follow the diagnosis.
+
+
+Make the change — one change — then run the full attack set again with python run_attacks.py --set <folder> --label after, plus your five criteria at three trials each (python run_eval.py --label after), in the same format.
+
+
+Put both result sets in your README, before and after, so the difference is visible side by side.
+
+
+Say whether it helped. If it didn't, say that. Widening the unsure band usually fixes one problem and creates another — reporting that trade honestly is worth full credit.
+
+🛑 If you're stuck
+
+Improvement not working after 40 minutes? Keep what you have, put both result sets in anyway, and write down what you tried and where it broke.
+
+A failed improvement you can explain is a complete submission. An unfinished one you can't describe isn't.
+
+📍 Before you move on
+
+Both result sets are in your README. You can say in one sentence whether the change helped. Commit.
+
+
+
+Milestone 6: Say what's still broken, and submit
+⏰ ~20 min
+
+Finish the write-up and make the call on what you didn't fix.
+
+
+Write What's Still Broken. For each attack that still gets through and each criterion still missed: what you'd do, and why you stopped. "I ran out of time" is fine if it's true.
+
+
+Add two sentences on the trade you'd make if this ran for real. Fewer wrong accusations means more AI text getting through. Say which way you'd go and who pays for it.
+
+
+Update How I Used AI with anything from this unit, then submit the same URL you submitted in the previous unit.
+
+📍 Before you move on
+
+Both result sets, verdicts, diagnoses, your log extract, and your call on what's left. Same repository URL. Commit.
+
+
+
+📬 Submitting your project
+Submit the same GitHub repository URL you submitted in the previous unit. Your repo needs these added:
+
+File	What's in it
+criteria.md	Unchanged, plus any revisions written underneath the originals with reasons
+logs/audit.jsonl	Your audit log, covering the attack run. Commit it, and also paste ten entries into your README, which is what gets read
+results/	Your flood test, both attack runs, and both eval runs
+scenarios.py	The scenarios your criteria are tested with
+README.md	The five sections below, added to what's already there
+—	At least four new commits from this unit
+New README sections:
+
+Section	What goes in it
+Rate Limiting	Your limits, why those numbers, and the pasted run of status codes showing 429
+Attack Run — Before	Every attack with its outcome and a held-or-broke mark, plus ten audit log entries pasted as text
+Run Log and Verdicts	Your five criteria across three trials, MET or MISSED, and for each miss the stage and mechanism
+The Improvement	What you changed, why, and the Attack Run — After in the same format
+What's Still Broken	What you'd do about each remaining failure, why you stopped, and the trade you'd make in production
+Paste everything as text. No screenshots, no video.
+
+Do not delete or recreate your repository. Your commit history from the previous unit is what shows your criteria existed before your results did.
+
+
+🗺️ How it's graded
+The full breakdown of graded features and points is on the course grading page.
+
+This unit's grade comes from three questions:
+
+Was the system actually run against the attack set and enough trials to produce the measure your criteria named?
+Were your criteria applied correctly? Not "did you use them" — whether the verdict is right given what the runs produced.
+Did the improvement make sense, and can you say whether it helped?
+Holding every attack earns nothing extra. Failing them costs nothing. Points come from criteria that are testable, a run that genuinely happened, and a real diagnosis of each failure.
