@@ -43,62 +43,46 @@ Two things worth knowing before you pick numbers:
 
 ---
 ## 1.
-
-<!-- Your criterion. It must name a number. -->
-
-
+Of 10 human written pieces, at most 1 is labeled high-confidence AI.
 
 **Why this target:**
-
-
+A high confidence false positive is very costly, and must be rare.
 
 ---
 
 ## 2.
-
-<!-- Your criterion. -->
-
-
+The mean scores of 5 AI written pieces, and 5 human written pieces should by at
+least .4
 
 **Why this target:**
-
-
+The mean of AI vs human written pieces must have enough separation so that the
+distributions have minimal overlap.
 
 ---
 
 ## 3.
-
-<!-- Your criterion. -->
-
-
+Given 5 AI written, and 5 human written pieces, all 3 of the labels are returned 
+at least once.
 
 **Why this target:**
-
-
+There should be enough difference in scoring between the pieces (1/2 AI, 1/2 human) 
+so that all 3 labels are used.
 
 ---
 
 ## 4.
-
-<!-- Your criterion. -->
-
-
+For 5 of 5 valid appeals, the status always changes in the log.
 
 **Why this target:**
-
-
+This target should be algorithmic, and thus should never fail.
 
 ---
 
 ## 5.
-
-<!-- Your criterion. -->
-
-
+For 5 of 5 attempts, empty text returns a 400, not a 500.
 
 **Why this target:**
-
-
+This target should be algorithmic, and thus should never fail.
 
 ---
 
