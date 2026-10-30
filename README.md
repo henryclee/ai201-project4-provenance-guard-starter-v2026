@@ -256,23 +256,16 @@ case scenario for conflicting signals like this.
 
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
-
-The ranges are the starter's and are **not** yet chosen against a real distribution. What
-the measurements above say about them: the four calibration texts land at 0.05, 0.269,
-0.785 and 0.885 — all outside the unsure band — so a test set of clear-cut examples will
-return only `human` and `AI`, and unit 7's criterion 3 (all three labels reachable) can
-fail on it. The band is reachable in principle: the split case **Human2** lands at exactly
-0.500, squarely inside it. So the fix in Milestone 5 is band width and gating — decide
-whether "unsure" should be driven by the score, by low certainty, or by either — not a
-nudge to make one ten-piece test set pass.
+| high-confidence human | 0.00 - 0.35 | "This appears to have been written by a human." |
+| unsure | 0.35 - 0.65 | "There is not enough evidence to be certain if this is human or AI generated." |
+| high-confidence AI | 0.65 - 1.00 | "This appears to have been written by AI." |
 
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
      sounding like an accusation, because the person reading it may well have
      written every word themselves. -->
+
+It is not making a decision either way. It basically is a way for the app to say "I don't know."
 
 
 ---

@@ -229,7 +229,7 @@ def submit():
         return _reject(
             "unknown",
             "invalid_payload",
-            "Expected a JSON object like {\"text\": \"...\", \"creator_id\": \"...\"}.",
+            'Expected a JSON object like {"text": "...", "creator_id": "..."}.',
         )
 
     creator_id = payload.get("creator_id")
@@ -327,7 +327,10 @@ def submit():
     )
     combined_score = breakdown["combined_score"]
     confidence = scoring.confidence(
-        model_score, style_score or 0.0, combined_score, word_count,
+        model_score,
+        style_score or 0.0,
+        combined_score,
+        word_count,
         style_available,
     )
 
@@ -348,7 +351,8 @@ def submit():
         # re-running a model that may by then have been replaced.
         evidence_model=round(breakdown["evidence_model"], 4),
         evidence_style=(
-            None if breakdown["evidence_style"] is None
+            None
+            if breakdown["evidence_style"] is None
             else round(breakdown["evidence_style"], 4)
         ),
         disagreement=round(breakdown["disagreement"], 4),
@@ -394,14 +398,29 @@ def appeal():
     """
     payload = request.get_json(silent=True) or {}
 
-    # TODO: delete this and build the route.
+    content_id = payload.get("content_id", "")
+    reasoning = payload.get("reasoning", "")
+
+    if content_id == "" or reasoning == "":
+        return _reject(
+            "unknown",
+            "invalid_appeal",
+            'Expected a JSON object like {"content_id": "...", "reasoning": "..."}.',
+        ), 400
+
+    entries = audit.entries_for(content_id)  # check it exists, or return 400
+    creator_id = entries[0]["creator_id"] if entries else "unknown"
+
+    if not entries:
+        return jsonify({"error": "content_id not found"}), 400
+
+    audit.log_appeal(content_id=content_id, creator_id=creator_id, reasoning=reasoning)
+
     return jsonify(
         {
-            "error": "not_implemented",
-            "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-            "you_sent": payload,
+            "message": f"content_id {content_id} has been marked under review. Thank you for your appeal.",
         }
-    ), 501
+    ), 200
 
 
 # ── Already works ─────────────────────────────────────────────────────────────

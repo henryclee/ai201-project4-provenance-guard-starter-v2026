@@ -141,8 +141,7 @@ def score_breakdown(
         e_style = signal_evidence("style", style_score)
         w_total = config.WEIGHT_MODEL_SIGNAL + config.WEIGHT_STYLE_SIGNAL
         pooled = (
-            config.WEIGHT_MODEL_SIGNAL * e_model
-            + config.WEIGHT_STYLE_SIGNAL * e_style
+            config.WEIGHT_MODEL_SIGNAL * e_model + config.WEIGHT_STYLE_SIGNAL * e_style
         ) / w_total
         # Distance apart, in evidence units. Two independent methods that land a full
         # unit apart have told you opposite things about the same text.
@@ -298,10 +297,13 @@ def score_to_label(score: float) -> tuple[str, str]:
     """
     # TODO: replace this — thresholds are in config.py
     if score >= config.AI_THRESHOLD:
-        return "ai", "PLACEHOLDER — write the high-confidence AI label."
+        return "ai", "This appears to have been written by AI."
     if score <= config.HUMAN_THRESHOLD:
-        return "human", "PLACEHOLDER — write the high-confidence human label."
-    return "unsure", "PLACEHOLDER — write the unsure label."
+        return "human", "This appears to have been written by a human."
+    return (
+        "unsure",
+        "There is not enough evidence to be certain if this is human or AI generated.",
+    )
 
 
 def label_ranges() -> list[tuple[str, str]]:

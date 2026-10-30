@@ -81,10 +81,10 @@ DETECTOR_MAX_TOKENS = 400
 # the AI references come from obvious boilerplate, so formulaic HUMAN prose (student
 # essays, corporate memos, form letters) is the human writing that sits closest to
 # the line we accuse on.
-CAL_HUMAN_MODEL = 0.42          # PLACEHOLDER — centre of human model scores (n=2)
-CAL_AI_MODEL = 0.77             # PLACEHOLDER — centre of AI model scores (n=2)
-CAL_HUMAN_STYLE = 0.14          # PLACEHOLDER — centre of human style scores (n=2)
-CAL_AI_STYLE = 0.51             # PLACEHOLDER — centre of AI style scores (n=2)
+CAL_HUMAN_MODEL = 0.42  # PLACEHOLDER — centre of human model scores (n=2)
+CAL_AI_MODEL = 0.77  # PLACEHOLDER — centre of AI model scores (n=2)
+CAL_HUMAN_STYLE = 0.14  # PLACEHOLDER — centre of human style scores (n=2)
+CAL_AI_STYLE = 0.51  # PLACEHOLDER — centre of AI style scores (n=2)
 
 # How much each calibrated signal counts. Because weights now sit on evidence units
 # rather than on two differently-scaled 0-1 outputs, 0.5/0.5 is a claim about which
@@ -103,9 +103,9 @@ WEIGHT_STYLE_SIGNAL = 0.5
 # methods disagreeing IS uncertainty and needs no special-case branch. Damping the
 # EVIDENCE rather than clamping probabilities is what keeps the clearly-human and
 # clearly-AI ends distinguishable instead of saturating both at 0.0 and 1.0.
-COMBINE_CROSSOVER = 0.5         # evidence separating a human-ward verdict from AI-ward
-COMBINE_SLOPE = 4.0             # how hard the pooled evidence is squashed onto 0-1
-DISPERSION_FULL = 1.0           # disagreement (in evidence units) that zeroes the verdict
+COMBINE_CROSSOVER = 0.5  # evidence separating a human-ward verdict from AI-ward
+COMBINE_SLOPE = 4.0  # how hard the pooled evidence is squashed onto 0-1
+DISPERSION_FULL = 1.0  # disagreement (in evidence units) that zeroes the verdict
 
 # The verdict bar sits at the crossover PLUS a leniency bias, so calling something AI
 # means clearing 0.55 rather than 0.50. That 0.05 is the Milestone 1 false-positive
@@ -137,12 +137,12 @@ GUESS_BIAS = 0.05
 #
 # Nothing in that table is defensible until it is measured on a real corpus, which is
 # why it ships as a PLACEHOLDER rather than dressed up as a tuned value.
-SIGMA_BASE = 0.30               # PLACEHOLDER — within-class sd of combined scores
-CONF_MAX = 0.95                 # never claim certainty 1.0; also keeps log-odds finite
+SIGMA_BASE = 0.30  # PLACEHOLDER — within-class sd of combined scores
+CONF_MAX = 0.95  # never claim certainty 1.0; also keeps log-odds finite
 
 # How much text a measurement needs before it is worth anything at all.
-VALID_MIN_WORDS = 20            # at/below this, certainty is 0.0 — sample too small
-VALID_FULL_WORDS = 60           # at/above this, length costs nothing
+VALID_MIN_WORDS = 20  # at/below this, certainty is 0.0 — sample too small
+VALID_FULL_WORDS = 60  # at/above this, length costs nothing
 
 # Below this the request is refused rather than scored. Three words is not a stylistic
 # sample, and it is the floor the model itself imposes: perplexity needs a trigram to
@@ -195,9 +195,11 @@ STYLE_MIN_TOKENS = 8
 # style_signal, so setting one to 0.0 retires that metric without shifting
 # anyone else's scale.
 
-STYLE_WEIGHT_SPREAD = 0.45      # sentence-length regularity — the strongest idea of the three
-STYLE_WEIGHT_LEXICON = 0.35     # vocabulary variety, length-corrected
-STYLE_WEIGHT_PUNCT = 0.20       # punctuation rate — cheapest to spoof, so lightest weight
+STYLE_WEIGHT_SPREAD = (
+    0.45  # sentence-length regularity — the strongest idea of the three
+)
+STYLE_WEIGHT_LEXICON = 0.35  # vocabulary variety, length-corrected
+STYLE_WEIGHT_PUNCT = 0.20  # punctuation rate — cheapest to spoof, so lightest weight
 
 # The anchor rule, because three numbers with no rule behind them are three
 # guesses: put the HUMAN anchor at the median of real human prose and the AI
@@ -226,8 +228,8 @@ STYLE_WEIGHT_PUNCT = 0.20       # punctuation rate — cheapest to spoof, so lig
 # Metric 1 — coefficient of variation of sentence lengths (stdev / mean).
 # Human prose is lumpy, generated prose marches in step. High raw = human, so
 # style_signal inverts it.
-SPREAD_HUMAN = 0.55             # PLACEHOLDER — median CV of human prose, measured above
-SPREAD_AI = 0.18                # PLACEHOLDER — just under the human floor (p05 0.195)
+SPREAD_HUMAN = 0.55  # PLACEHOLDER — median CV of human prose, measured above
+SPREAD_AI = 0.18  # PLACEHOLDER — just under the human floor (p05 0.195)
 
 # Metric 2 — vocabulary variety. High raw value = more varied = human, so this is
 # the measure that needs the inversion (`adj_ttr = 1 - ttr`), applied through the
@@ -236,17 +238,17 @@ SPREAD_AI = 0.18                # PLACEHOLDER — just under the human floor (p0
 # 0.0 and the line becomes literally that. Tighter anchors ship by default because
 # real TTRs crowd the top of the range (0.82-0.97 measured); under literal `1 - x`
 # the metric sits near zero all day and its weight below is mostly fiction.
-LEXICON_HUMAN = 0.90            # PLACEHOLDER — median windowed TTR of human prose
-LEXICON_AI = 0.72               # PLACEHOLDER — near the human floor (0.70 seen, p05 0.820)
-STYLE_LEXICON_WINDOW = 25       # moving-average TTR window in words; 0 = global TTR
+LEXICON_HUMAN = 0.90  # PLACEHOLDER — median windowed TTR of human prose
+LEXICON_AI = 0.72  # PLACEHOLDER — near the human floor (0.70 seen, p05 0.820)
+STYLE_LEXICON_WINDOW = 25  # moving-average TTR window in words; 0 = global TTR
 
 # Metric 3 — comma-class punctuation per 100 words.
 # Comma-class marks carry the weight because a set of only `; : —` sits at zero for
 # most ordinary prose, which pins the metric at one end for every text. Apostrophes
 # are excluded on purpose: `don't` and `it's` would score contractions as
 # punctuation and hand informal writing a free human reading.
-PUNCT_HUMAN = 6.5               # PLACEHOLDER — median marks per 100w of human prose
-PUNCT_AI = 2.5                  # PLACEHOLDER — just under the human floor (p05 3.12)
+PUNCT_HUMAN = 6.5  # PLACEHOLDER — median marks per 100w of human prose
+PUNCT_AI = 2.5  # PLACEHOLDER — just under the human floor (p05 3.12)
 STYLE_PUNCT_CHARS = ",;:()\u2014\u2013\u201c\u201d\u2026"  # , ; : ( ) — – “ ” …
 
 
@@ -257,32 +259,9 @@ STYLE_PUNCT_CHARS = ",;:()\u2014\u2013\u201c\u201d\u2026"  # , ; : ( ) — – �
 #   score < HUMAN_THRESHOLD          -> high-confidence human
 #   between the two                  -> unsure
 #   score > AI_THRESHOLD             -> high-confidence AI
-#
-# ⚠️ This is where your false-positive decision from Milestone 1 actually gets
-# made. Widening the unsure band means fewer wrong accusations and more AI text
-# getting through. There is no setting that avoids the trade — only settings that
-# decide who pays for it. The verdict bar higher up in this file (0.55) is the same
-# decision on the GUESS axis; these two numbers are the decision on the LABEL axis.
-# They are allowed to differ, because "we guess human" and "we are not sure enough to
-# say either way" are two different statements.
 
 HUMAN_THRESHOLD = 0.35
 AI_THRESHOLD = 0.65
-
-# ⚠️ KNOWN CONSEQUENCE, left unfixed deliberately. Calibration pushes the four
-# milestone4 texts to 0.05 / 0.27 / 0.79 / 0.89 — every one of them OUTSIDE the
-# 0.35–0.65 unsure band — so a test set made of clear-cut examples returns only
-# "human" and "AI", and unit 7's criterion 3 (all three labels reachable) can fail on
-# it. That is a band-width problem rather than a scoring problem, and it belongs in
-# Milestone 5: the honest fix is to widen the band or gate "unsure" on the certainty
-# number, not to nudge these cutoffs until a ten-piece test set happens to pass.
-#
-# The warning that used to live here — that a stub style_signal pinned the combined
-# score to 0.25–0.75 — no longer applies. With style_signal implemented the score
-# genuinely spans 0.02–0.89 on measured text, so all three bands are physically
-# reachable. Whether YOUR test texts land in all three is now a question you can answer
-# by measuring, which is the point of `scoring.label_ranges()`.
-
 
 # ─── Rate limiting (UNIT 8) ──────────────────────────────────────────────────
 # Off in unit 7. You turn it on and choose the numbers in unit 8, Milestone 1.
