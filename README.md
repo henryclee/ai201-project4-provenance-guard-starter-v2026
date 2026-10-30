@@ -278,7 +278,7 @@ It is not making a decision either way. It basically is a way for the app to say
 **Milestone 3 sample run**
 
 ```bash
-curl -X POST http://127.0.0.1:5000/submit \
+$ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
   -d '{"text": "This text is a sterling example short prose that is unequivocally written by a human. It must be clear that no machine, even in an insane bout of high temperature rambling, could have come up with it. It should have sentences of varying length, unexpected word choices, and some literary surprise. Short sentences. Sentences of medium length. And sentences that are so long that a reader might become fatigued reading it, perhaps wondering in desperation whether hopefully, eventually, the sentence might end.", "creator_id": "a_human"}'
 ```
@@ -295,7 +295,7 @@ curl -X POST http://127.0.0.1:5000/submit \
 ```
 
 ```bash
-curl -X POST http://127.0.0.1:5000/submit \
+$ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
   -d '{"text": "The implementation of the proposed framework requires careful consideration of several key factors. First, it is important to note that the system must be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables.", "creator_id": "ai"}'
 ```
@@ -312,7 +312,7 @@ curl -X POST http://127.0.0.1:5000/submit \
 ```
 
 ```bash
-curl -X POST http://127.0.0.1:5000/submit \
+$ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
   -d '{"text": "The implementation of the proposed framework carefully consider several key factors. Firstly, it is critical that the system be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables.", "creator_id": "human+ai"}'
 ```
@@ -329,7 +329,7 @@ curl -X POST http://127.0.0.1:5000/submit \
 ```
 
 ```bash
-curl -X GET http://127.0.0.1:5000/log
+$ curl -X GET http://127.0.0.1:5000/log
 ```
 
 ```json
@@ -383,61 +383,37 @@ curl -X GET http://127.0.0.1:5000/log
 ```bash
 $ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+  -d '{"text": "Where Congress has spoken, Congress has spoken; only its judgments matter. And courts alone determine when that has happened: Using all their normal interpretive tools, they decide whether Congress has addressed a given issue. But when courts have decided that Congress has not done so, a choice arises. Absent a legislative directive, either the administering agency or a court must take the lead. And the matter is more fit for the agency.", "creator_id": "Formal human"}'
 ```
 
 ```json
 {
-  "combined_score": 0.0571255490288144,
-  "confidence": 0.95,
-  "content_id": "21cf1f58-fce3-4cbb-b2c2-ad5ec90c5ada",
+  "combined_score": 0.2687272959587301,
+  "confidence": 0.815137858037386,
+  "content_id": "989e0484-8408-421d-9ca9-0789bb2ad129",
   "guess": "human",
   "label": "placeholder",
-  "model_score": 0.3488,
+  "model_score": 0.4994,
   "status": "decided",
   "style_available": true,
-  "style_score": 0.0603,
-  "style_tokens": 82,
-  "word_count": 82
+  "style_score": 0.2351,
+  "style_tokens": 72,
+  "word_count": 72
 }
 ```
-
-The same route on blatant AI boilerplate, on lightly-edited AI, and on empty text — all
-captured live, all on Milestone 4's calibrated rule:
-
-```jsonc
-// AI boilerplate — accused, and moderately sure of it
-{"combined_score": 0.8848, "confidence": 0.5977, "guess": "ai",
- "model_score": 0.8326, "style_score": 0.5194, "style_tokens": 47, "word_count": 47,
- "content_id": "962d778d-…", "label": "placeholder", "status": "decided"}
-
-// The same text with a few typos and a reworded opening — still caught, less sure
-{"combined_score": 0.7847, "confidence": 0.4023, "guess": "ai",
- "model_score": 0.7016, "style_score": 0.4995, "style_tokens": 42, "word_count": 42,
- "content_id": "174a5cab-…", "label": "placeholder", "status": "decided"}
-
-// Empty text — 400, not a 500, and logged as a rejection rather than a decision
-{"error": "empty_text", "message": "'text' is empty or whitespace only.",
- "status": "rejected"}
-```
-
-Note what the human verdict at 0.057 is doing compared with Milestone 3's identical
-request, which reported `confidence: 0.0` and `style_score: 0.0` because neither existed
-yet. Same input, same model score 0.3488 — the difference is that style is now measured
-(0.0603) and the two signals are calibrated, pooled and damped into a number that means
-something, with a certainty attached that says *why* it means something: both signals
-agree, the text is 82 words long, and the score sits 0.49 away from the verdict bar.
 
 **An appeal**
 
 ```bash
 $ curl -X POST http://127.0.0.1:5000/appeal \
   -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+  -d '{"content_id": "989e0484-8408-421d-9ca9-0789bb2ad129", "reasoning": "Please help"}'
 ```
 
 ```json
-
+{
+  "message": "content_id 989e0484-8408-421d-9ca9-0789bb2ad129 has been marked under review. Thank you for your appeal."
+}
 ```
 
 **What the log shows afterwards**
@@ -447,7 +423,46 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
-
+{
+  "count": 3,
+  "entries": [
+    {
+      "content_id": "c2c9a811-7b54-469d-b1c8-2bcd11e082e1",
+      "creator_id": "human2",
+      "event": "appeal",
+      "reasoning": "I am human!",
+      "status": "under_review",
+      "timestamp": "2026-10-30T21:48:49+00:00"
+    },
+    {
+      "agreement": 0.9698,
+      "combined_score": 0.2687272959587301,
+      "confidence": 0.815137858037386,
+      "content_id": "989e0484-8408-421d-9ca9-0789bb2ad129",
+      "creator_id": "Formal human",
+      "disagreement": 0.0302,
+      "evidence_model": 0.2269,
+      "evidence_style": 0.257,
+      "guess": "human",
+      "label": "placeholder",
+      "model_score": 0.4994,
+      "status": "decided",
+      "style_available": true,
+      "style_score": 0.2351,
+      "style_tokens": 72,
+      "timestamp": "2026-10-30T21:53:18+00:00",
+      "word_count": 72
+    },
+    {
+      "content_id": "989e0484-8408-421d-9ca9-0789bb2ad129",
+      "creator_id": "Formal human",
+      "event": "appeal",
+      "reasoning": "Please help",
+      "status": "under_review",
+      "timestamp": "2026-10-30T21:55:30+00:00"
+    }
+  ]
+}
 ```
 
 ---
@@ -457,14 +472,21 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 **Moment 1**
 
 - *What I asked for:*
+Help writing the logic for stylometry functions, as using a naive approach for sentence length variance,
+token variability, and punctuation density seemed like it would be terrible for this purpose.
 - *What came back:*
+A rather comprehensive set of functions calibrated on self generated text segments to have reasonable parameters.
 - *What I changed:*
+I reviewed the code, made some manual changes, and used it.
 
 **Moment 2**
 
 - *What I asked for:*
+Help writing the logic for combining scores and confidence, as just taking an average seemed like it would be too simplistic.
 - *What came back:*
+A rather sophisticated approach to combining scores, and generating a confidence level.
 - *What I changed:*
+I reviewed the suggested changes, and reviewed the artifacts that the AI generated, and used it.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
