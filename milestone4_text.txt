@@ -1,0 +1,19 @@
+Human
+
+"This text is a sterling example short prose that is unequivocally written by a human. It must be clear that no machine, even in an insane bout of high temperature rambling, could've come up with it. It should have sentences of varying length, unexpected word choices, and some literary surprise. Short sentences. Sentences of medium length. And sentences that are so long that a reader might become fatigued reading it, perhaps wondering in desperation whether hopefully, eventually, the sentence might end."
+
+AI
+
+"The implementation of the proposed framework requires careful consideration of several key factors. First, it is important to note that the system must be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables."
+
+Lightly-edited AI
+
+"The implementation of the proposed framework carefully consider several key factors. Firstly, it is critical that the system be able to handle a wide variety of different inputs.  Additionally, the overall performance of the solution depends on a number of important variables."
+
+Formal
+
+"Where Congress has spoken, Congress has spoken; only its judgments matter. And courts alone determine when that has happened: Using all their normal interpretive tools, they decide whether Congress has addressed a given issue. But when courts have decided that Congress has not done so, a choice arises. Absent a legislative directive, either the administering agency or a court must take the lead. And the matter is more fit for the agency."
+
+Human2
+
+Last month, my family and I stayed at The Seaside Hotel for three nights. The location was perfect, because it was only a two-minute walk from the beach and very close to the shops and restaurants in the town.

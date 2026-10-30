@@ -31,6 +31,8 @@ from flask import Flask, jsonify, request
 import audit
 import config
 import detector
+import scoring
+import stylometry
 
 app = Flask(__name__)
 
@@ -164,83 +166,210 @@ def health():
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
 
+def _reject(creator_id: str, reason: str, message: str, **extra):
+    """
+    Refuse a request — and make sure the refusal exists afterwards.
+
+    The logging lives here rather than at each call site so that no branch can forget it.
+    A rejection that leaves no trace is indistinguishable from a quiet afternoon, and
+    unit 8's entire argument about spotting abuse depends on those two being tellable
+    apart. `status: "rejected"` also keeps a refusal from being mistaken downstream for
+    a decision about a writer, which it is not: nothing was measured.
+    """
+    audit.log_rejection(creator_id=creator_id, reason=reason, **extra)
+    return jsonify({"error": reason, "message": message, "status": "rejected"}), 400
+
+
 @app.post("/submit")
 # @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
     """
     Take a piece of text, decide about it, log the decision, answer.
-    ← TODO — Milestones 3, 4 and 5
+    ← Milestones 3 and 4 are built. Milestone 5 (the label) is not.
 
     Expects JSON:
         {"text": "...", "creator_id": "..."}
 
-    Should return JSON with, at minimum:
-        {"content_id": "...", "guess": "...", "confidence": 0.0, "label": "...",
-         "model_score": 0.0, "style_score": 0.0}
+    Returns JSON:
+        {"content_id": "...", "guess": "ai"|"human", "confidence": 0.0-1.0,
+         "label": "placeholder", "model_score": 0.0, "style_score": 0.0|null,
+         "combined_score": 0.0, "word_count": 0, "style_tokens": 0,
+         "style_available": true, "status": "decided"}
+
+    `label` is still "placeholder" deliberately — the label PROSE is Milestone 5's work,
+    so anything that checks label text fails here while the numbers, the guess and the
+    certainty are all real.
 
     ⚠️ **Both signal scores go in the response, not just the log.** Unit 8's
-    `run_attacks.py` and `run_eval.py` read `model_score` and `style_score`
-    straight off this response and put them in your reports. Leave them out and
-    every row of next unit's evidence says `null` — which is exactly the
-    diagnostic you need to name a stage and a mechanism. You do not want to
-    find that out after running the attack set.
+    `run_attacks.py` and `run_eval.py` read `model_score` and `style_score` straight off
+    this response into their reports. `style_score` comes back `null` when the style
+    signal could not measure the text at all — see `style_available`. An unmeasured
+    signal written as 0.0 would be a small lie that flatters the writer, and one written
+    as 1.0 would convict someone on a number that was never taken.
 
-    ─────────────────────────────────────────────────────────────────────────
-    Build it in three passes. Do not skip ahead — the ordering is how you tell
-    a broken route from a broken signal.
+    The failure contract, decided now because unit 8's attack set otherwise decides it
+    for you:
 
-    **Milestone 3 — the route answers.**
-      1. Return a hardcoded response. Confirm `curl` gets it back before you
-         add any logic at all.
-      2. Then pull `text` and `creator_id` out of the payload.
-      3. Then call ONE signal — `detector.model_signal(text)` — and put the
-         real number in. Leave confidence and label as placeholders.
-      4. Log every submission with `audit.log_decision(...)`. The content_id
-         matters: `/appeal` needs it, and a student who skips it rebuilds this
-         whole flow later.
+        400  missing / non-string / whitespace-only text, or fewer than
+             MIN_SUBMIT_WORDS words AND MIN_SUBMIT_CHARS characters — nothing to measure
+        503  the model isn't loaded — the text is not in question, retry later
+        200  a verdict, with certainty possibly 0.0 for text too short to mean much
 
-    **Milestone 4 — the second signal and the score.**
-      5. Add `stylometry.style_signal(text)`.
-      6. Combine them with `scoring.combine_signals(...)`.
-      7. Log BOTH signal scores alongside the combined one, and put them in the
-         response too. Next unit you can't diagnose anything without them.
-
-    **Milestone 5 — the label.**
-      8. `scoring.score_to_label(...)` and put the real label in the response.
-
-    ─────────────────────────────────────────────────────────────────────────
-    Worth deciding early, because unit 8's attack set will decide it for you:
-    what should this do when `text` is missing, empty, or enormous? A crash on
-    a malformed input is one of the most common real failures there is.
+    Every branch leaves a log line. A rejection that leaves no trace looks exactly like a
+    quiet afternoon, and an attack you cannot see is an attack you cannot stop.
     """
-    payload = request.get_json(silent=True) or {}
+    # `silent=True` so a body that isn't JSON at all lands in our validation instead
+    # of Flask raising before this function runs. Note it is `or None`, not `or {}`:
+    # a bare JSON string or list is valid JSON and must be distinguishable from an
+    # empty object, because "you sent me the wrong shape" and "you sent me nothing"
+    # are different messages to a caller trying to integrate against this.
+    payload = request.get_json(silent=True)
 
-    text = payload.get("text", "")
-    creator_id = payload.get("creator_id", "unknown")
+    if not isinstance(payload, dict):
+        return _reject(
+            "unknown",
+            "invalid_payload",
+            "Expected a JSON object like {\"text\": \"...\", \"creator_id\": \"...\"}.",
+        )
+
+    creator_id = payload.get("creator_id")
+    if not isinstance(creator_id, str) or not creator_id.strip():
+        creator_id = "unknown"
+
+    text = payload.get("text")
+    if text is None:
+        return _reject(creator_id, "missing_text", "No 'text' field in the request.")
+    if not isinstance(text, str):
+        return _reject(
+            creator_id,
+            "invalid_text",
+            "'text' must be a string of written prose.",
+            received=type(text).__name__,
+        )
+    if not text.strip():
+        return _reject(creator_id, "empty_text", "'text' is empty or whitespace only.")
+
+    # Two different counts, because they answer two different questions.
+    #
+    #   word_count  — whitespace words, the plain "is there enough text here" measure
+    #                 that gates the request and judges whether there is enough of a
+    #                 sample to be certain about anything.
+    #   style_tokens — what THIS codebase's tokenizer can actually see. That is what the
+    #                 style signal measured, so it is what decides whether style is
+    #                 available at all.
+    #
+    # They disagree whenever text is dense or oddly spaced, which is why the request gate
+    # requires BOTH floors to fail before refusing anything.
+    word_count = len(text.split())
+    char_count = len(text.strip())
+    if word_count < config.MIN_SUBMIT_WORDS and char_count < config.MIN_SUBMIT_CHARS:
+        return _reject(
+            creator_id,
+            "text_too_short",
+            (
+                f"Need at least {config.MIN_SUBMIT_WORDS} words "
+                f"(or {config.MIN_SUBMIT_CHARS} characters) to score; "
+                f"got {word_count} words / {char_count} characters."
+            ),
+            word_count=word_count,
+            char_count=char_count,
+        )
+
+    try:
+        model_score = detector.model_signal(text)
+    except detector.DetectorUnavailable as exc:
+        # The model is missing or failed to download. Nothing about THIS text is in
+        # question, so it must not arrive as a 500 that reads like the caller's input
+        # was at fault, and it must not be logged as a decision about a writer.
+        audit.log_rejection(
+            creator_id=creator_id,
+            reason="detector_unavailable",
+            detail=str(exc),
+            word_count=word_count,
+        )
+        return jsonify(
+            {
+                "error": "detector_unavailable",
+                "message": (
+                    "The text model isn't loaded, so nothing can be scored right now. "
+                    "Check /health and try again once detector_report is true."
+                ),
+                "status": "unavailable",
+            }
+        ), 503
+
+    # Absent evidence, not weak evidence. Below STYLE_MIN_TOKENS the style metrics are
+    # measuring whichever few words happened to be there rather than how the text was
+    # written, so they are dropped from the combination and the verdict rests on the
+    # model alone, at reduced certainty. See STYLE_MIN_TOKENS in config.py.
+    style_tokens = len(stylometry.words(text))
+    style_available = style_tokens >= config.STYLE_MIN_TOKENS
+    style_score = None
+    if style_available:
+        try:
+            style_score = stylometry.style_signal(text)
+        except Exception as exc:  # a broken signal must never take the route down
+            style_available = False
+            audit.log_rejection(
+                creator_id=creator_id,
+                reason="style_signal_failed",
+                detail=str(exc),
+                word_count=word_count,
+            )
+
+    # Minted only once there IS a decision to identify. A refused request has no
+    # content, so giving it a content_id would put an identifier in the log for nothing,
+    # and /appeal later would have something to point at that was never judged.
     content_id = str(uuid.uuid4())
-    detector_score = detector.model_signal(text)
+
+    breakdown = scoring.score_breakdown(
+        model_score, style_score or 0.0, style_available
+    )
+    combined_score = breakdown["combined_score"]
+    confidence = scoring.confidence(
+        model_score, style_score or 0.0, combined_score, word_count,
+        style_available,
+    )
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
-        guess="AI" if detector_score > 0.5 else "human",
-        model_score=detector_score,
-        style_score=0.0,
-        combined_score=0.0,
+        guess=breakdown["guess"],
+        model_score=model_score,
+        style_score=style_score,
+        combined_score=combined_score,
         label="placeholder",
-        status="placeholder",
+        status="decided",
+        confidence=confidence,
+        word_count=word_count,
+        style_tokens=style_tokens,
+        style_available=style_available,
+        # The intermediates, so a verdict can be reconstructed months later without
+        # re-running a model that may by then have been replaced.
+        evidence_model=round(breakdown["evidence_model"], 4),
+        evidence_style=(
+            None if breakdown["evidence_style"] is None
+            else round(breakdown["evidence_style"], 4)
+        ),
+        disagreement=round(breakdown["disagreement"], 4),
+        agreement=round(breakdown["agreement"], 4),
     )
 
-    return jsonify(
-        {
-            "content_id": content_id,
-            "guess": "AI" if detector_score > 0.5 else "human",
-            "confidence": 0.0,
-            "label": "placeholder",
-            "model_score": detector_score,
-            "style_score": 0.0,
-        }
-    ), 500
+    response = {
+        "content_id": content_id,
+        "guess": breakdown["guess"],
+        "confidence": confidence,
+        "label": "placeholder",
+        "model_score": model_score,
+        "style_score": style_score,
+        "combined_score": combined_score,
+        "word_count": word_count,
+        "style_tokens": style_tokens,
+        "style_available": style_available,
+        "status": "decided",
+    }
+
+    return jsonify(response), 200
 
 
 @app.post("/appeal")

@@ -128,16 +128,122 @@ someone to do on purpose.
 
 **The rule:**
 
+The two signals answer the same question, but they do not answer it on the same scale, so
+the rule calibrates before it averages. Each signal is first converted into **evidence
+units** against two reference points of its own — the score typical human prose gets on
+that signal, and the score typical AI prose gets:
+
+```
+evidence = (signal − human_reference) / (AI_reference − human_reference)
+```
+
+`0` means "reads like our human samples", `1` means "reads like our AI samples", and
+`0.5` is a genuine coin flip. That last one is the whole reason for the step. On the raw
+model signal, `0.5` is perplexity 45 — comfortably ordinary human writing; my Formal
+sample scored 0.4994 there. On the raw style signal, `0.5` is already a suspicious
+reading, yet blatant AI boilerplate only just reaches it at 0.5194. A shared bar at 0.5
+would have the model one thousandth of a point away from accusing plain human prose
+while style could barely convict the obvious machine text in front of it.
+
+The two evidences are then averaged with equal weight, **damped** toward the coin-flip
+point in proportion to how far apart they sit, and squashed onto 0–1 once, at the end:
+
+```
+pooled    = 0.5·E_model + 0.5·E_style
+agreement = 1 − min(|E_model − E_style| / 1.0, 1)
+effective = 0.5 + (pooled − 0.5)·agreement
+score     = 1 / (1 + e^(−4·(effective − 0.5)))
+guess     = AI if score > 0.55 else human        # ties go human
+```
+
+**What happens when they disagree:** the verdict collapses toward the middle instead of
+averaging into a confident-looking number. Two signals a full unit apart land on exactly
+**0.500**, and 0.500 is not accused. Two methods telling opposite stories *is* the
+finding, so it is reported as uncertainty rather than smoothed away — and the certainty
+that comes with it is low (0.19 for a 0.90/0.10 pair). Damping the evidence rather than
+clamping probabilities is also why an unusual text can still land at 0.05 or 0.89 instead
+of saturating at both ends and losing the ordering that matters.
+
+**Which way I chose to be wrong:** toward the human. The bar is `0.55`, not `0.50`, so an
+accusation has to clear a gap and ties go human: a wrong accusation costs a writer far
+more than a missed detection costs the site. The visible price is that light editing gets
+through — a subtler rewrite landing near 0.50 is not accused at all.
+
 **The numbers:**
+
+| Constant | Value | What it does |
+|---|---|---|
+| `CAL_HUMAN_MODEL` / `CAL_AI_MODEL` | 0.42 / 0.77 | model-signal reference points — ⚠️ centres of **two** texts each: a placeholder, not a corpus |
+| `CAL_HUMAN_STYLE` / `CAL_AI_STYLE` | 0.14 / 0.51 | style-signal reference points — same caveat |
+| `WEIGHT_MODEL_SIGNAL` / `WEIGHT_STYLE_SIGNAL` | 0.5 / 0.5 | equal trust, applied to comparable units rather than to two different scales |
+| `COMBINE_CROSSOVER` | 0.5 | the coin flip — calibration is what makes it meaningful |
+| `COMBINE_SLOPE` | 4.0 | how hard pooled evidence is squashed onto 0–1 |
+| `DISPERSION_FULL` | 1.0 | disagreement, in evidence units, that cancels the verdict completely |
+| `GUESS_BIAS` | +0.05 | the accusation bar sits at **0.55**; ties go human |
+| `SIGMA_BASE` | 0.30 | within-class noise — sets how confident this system is ever allowed to sound. ⚠️ Judgement call, and the single most influential number here |
+| `CONF_MAX` | 0.95 | never claim certainty 1.0 |
+| `VALID_MIN_WORDS` / `VALID_FULL_WORDS` | 20 / 60 | certainty ramps with sample size; 20 words earns nothing |
+| `STYLE_MIN_TOKENS` | 8 | below this the style signal is **absent**, not weak |
+
+Scope: the tokenizer, both signals and both anchor sets are English-only, so non-English
+submissions are out of scope for this unit — see *Known limitation* below the measurements.
 
 **Where it lives:** `scoring.py::combine_signals`
 
 <!-- ⚠️ The grader checks your code against that line. If your rule lives
      somewhere else, say where. -->
 
+`score_breakdown()` in the same file is the same rule with every intermediate exposed —
+evidence per signal, disagreement, agreement, the verdict — and that dict is what
+`/submit` writes to the audit log, so a decision can be reconstructed months later
+instead of re-guessed. `combine_signals()` is a one-line call into it, which keeps there
+being exactly one implementation of the rule.
+
+### Confidence
+
+The score says which way; confidence says how sure we are that the guess is right — 0.0 
+is no idea, 1.0 is sure — and it carries no direction of its own, so 0.9 on a human verdict 
+is the same size of claim as 0.9 on an AI verdict.
+
+```
+z         = |score − 0.55| / (SIGMA_BASE / √n_signals)      # n_signals = 1 or 2
+certainty = erf(z / √2) × length_validity,  capped at 0.95
+length_validity = 0 at ≤20 words, ramping to 1 at ≥60 words
+```
+
+Three ideas are doing the work:
+
+- **Distance in units of our own noise, not raw points.** 0.56 next to a bar of 0.55 is a
+  coin flip that happened to land and gets near-zero certainty; 0.05 is a verdict.
+- **The standard error.** Dividing by `√n_signals` means a ruling resting on one signal is
+  automatically less certain than one corroborated by two — no special case in the code.
+- **Sample size.** A two-sentence submission cannot buy certainty at any score, which is
+  what `length_validity` is for; it can take the number to zero and does.
+
+Corroboration is deliberately **not** multiplied in a second time. Disagreement has
+already collapsed the score toward 0.500 in the combining step, which shrinks the distance
+from the bar and therefore the certainty; charging the same disagreement twice would make
+the number impossible to reason about. The cap at 0.95 exists because an automated
+accusation claiming certainty 1.0 is a statement no evidence this thin supports — and it
+keeps any log-odds taken downstream finite.
+
 **A case where my two signals split, and what my rule does with it:**
 
+My Human2 test uses purposefully simple language, one that a younger writer, or someone for
+whom english is a second language might use.
 
+"Last month, my family and I stayed at The Seaside Hotel for three nights. The location 
+was perfect, because it was only a two-minute walk from the beach and very close to the 
+shops and restaurants in the town."
+
+The model score is 0.8681 (very suggestive of AI). The style score is 0.2814 (more suggestive
+of human).
+
+The combining rule results in a combined score of 0.5337, which is above the coin flip, but
+below the bar (0.55), so the guess is human. The leniency is the only reason the guess is human.
+
+Confidence comes back at 0.029, so the guess is with very low certainty, which is probably the best
+case scenario for conflicting signals like this.
 
 ---
 
@@ -154,11 +260,19 @@ someone to do on purpose.
 | unsure |  |  |
 | high-confidence AI |  |  |
 
+The ranges are the starter's and are **not** yet chosen against a real distribution. What
+the measurements above say about them: the four calibration texts land at 0.05, 0.269,
+0.785 and 0.885 — all outside the unsure band — so a test set of clear-cut examples will
+return only `human` and `AI`, and unit 7's criterion 3 (all three labels reachable) can
+fail on it. The band is reachable in principle: the split case **Human2** lands at exactly
+0.500, squarely inside it. So the fix in Milestone 5 is band width and gating — decide
+whether "unsure" should be driven by the score, by low certainty, or by either — not a
+nudge to make one ten-piece test set pass.
+
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
      sounding like an accusation, because the person reading it may well have
      written every word themselves. -->
-
 
 
 ---
@@ -280,8 +394,46 @@ $ curl -X POST http://127.0.0.1:5000/submit \
 ```
 
 ```json
-
+{
+  "combined_score": 0.0571255490288144,
+  "confidence": 0.95,
+  "content_id": "21cf1f58-fce3-4cbb-b2c2-ad5ec90c5ada",
+  "guess": "human",
+  "label": "placeholder",
+  "model_score": 0.3488,
+  "status": "decided",
+  "style_available": true,
+  "style_score": 0.0603,
+  "style_tokens": 82,
+  "word_count": 82
+}
 ```
+
+The same route on blatant AI boilerplate, on lightly-edited AI, and on empty text — all
+captured live, all on Milestone 4's calibrated rule:
+
+```jsonc
+// AI boilerplate — accused, and moderately sure of it
+{"combined_score": 0.8848, "confidence": 0.5977, "guess": "ai",
+ "model_score": 0.8326, "style_score": 0.5194, "style_tokens": 47, "word_count": 47,
+ "content_id": "962d778d-…", "label": "placeholder", "status": "decided"}
+
+// The same text with a few typos and a reworded opening — still caught, less sure
+{"combined_score": 0.7847, "confidence": 0.4023, "guess": "ai",
+ "model_score": 0.7016, "style_score": 0.4995, "style_tokens": 42, "word_count": 42,
+ "content_id": "174a5cab-…", "label": "placeholder", "status": "decided"}
+
+// Empty text — 400, not a 500, and logged as a rejection rather than a decision
+{"error": "empty_text", "message": "'text' is empty or whitespace only.",
+ "status": "rejected"}
+```
+
+Note what the human verdict at 0.057 is doing compared with Milestone 3's identical
+request, which reported `confidence: 0.0` and `style_score: 0.0` because neither existed
+yet. Same input, same model score 0.3488 — the difference is that style is now measured
+(0.0603) and the two signals are calibrated, pooled and damped into a number that means
+something, with a certainty attached that says *why* it means something: both signals
+agree, the text is 82 words long, and the score sits 0.49 away from the verdict bar.
 
 **An appeal**
 
