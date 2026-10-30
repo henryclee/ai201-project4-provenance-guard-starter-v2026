@@ -423,6 +423,25 @@ def appeal():
     ), 200
 
 
+@app.get("/content/<content_id>")
+def get_content_status(content_id):
+    """
+    Get the status of a specific content_id.
+
+    Expects a content_id in the URL path.
+
+    Returns JSON:
+        {"content_id": "...", "status": "decided"|"under_review"|"not_found"}
+    """
+    entries = audit.entries_for(content_id)
+    if not entries:
+        return jsonify({"content_id": content_id, "status": "not_found"}), 404
+
+    # Assuming the latest entry determines the current status
+    latest_entry = entries[-1]
+    return jsonify({"content_id": content_id, "status": latest_entry["status"]}), 200
+
+
 # ── Already works ─────────────────────────────────────────────────────────────
 
 

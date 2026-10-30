@@ -464,6 +464,54 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
   ]
 }
 ```
+---
+
+## Stretch Feature: A GET /content/<id> endpoint that returns one item's current status.
+
+**Where it lives**
+app.py::get_content_status
+
+**Sample Run**
+
+Correctly sees an item under review
+
+```bash
+$ curl -X GET "http://127.0.0.1:5000/content/989e0484-8408-421d-9ca9-0789bb2ad129"
+```
+
+```json
+{
+  "content_id": "989e0484-8408-421d-9ca9-0789bb2ad129",
+  "status": "under_review"
+}
+```
+
+Correctly sees an item that's been decided
+
+```bash
+$ curl -X GET "http://127.0.0.1:5000/content/e6470306-eb7c-469f-8d1d-846f8069676e"
+```
+
+```json
+{
+  "content_id": "e6470306-eb7c-469f-8d1d-846f8069676e",
+  "status": "decided"
+}
+```
+
+Correctly flags an invalid content_id
+
+```bash
+$ curl -X GET "http://127.0.0.1:5000/content/noid"
+```
+
+```json
+{
+  "content_id": "noid",
+  "status": "not_found"
+}
+```
+
 
 ---
 
