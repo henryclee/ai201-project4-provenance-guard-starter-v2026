@@ -43,7 +43,7 @@ Two things worth knowing before you pick numbers:
 
 ---
 ## 1.
-Of 10 human-written test samples, at most 1 is labeled high-confidence AI.
+Of the 10 human-written samples in scenarios.py, at most 1 is labeled high-confidence AI.
 
 **Why this target:**
 A high confidence false positive is very costly, and must be rare.
@@ -55,8 +55,11 @@ The mean scores of 5 AI written pieces, and 5 human written pieces should vary b
 least .4
 
 **Why this target:**
-The mean of AI vs human written pieces must have enough separation to be useful. I 
-chose a spread of .4 as a target to minimize the overlap of uncertainty.
+Signal one (detector.py) and signal two (stylometry.py) are combined in 
+scoring.py::combine_signals as a weighted average. If the two group means are only 
+~.2 apart, the unsure band (0.4–0.6) swallows most of both groups and the 
+false-positive rate climbs. A .4 spread keeps the unsure band from being the default 
+outcome.
 
 ---
 
@@ -74,8 +77,9 @@ or human written, so should rightly be classified as uncertain.
 For 5 of 5 valid appeals, the appeal always changes the status.
 
 **Why this target:**
-This appeal api endpoint should algorithmically append a new entry to the log, so
-this should never fail.
+The appeal is the writer's only remedy for the false-positive mistake criterion 1 caps. 
+If the endpoint ever silently drops an appeal, an accused human has no recourse, and 
+the audit log becomes a record of the system lying. 5/5 means the safety net actually works.
 
 ---
 
@@ -83,8 +87,10 @@ this should never fail.
 For 5 of 5 attempts, empty text returns a 400, not a 500.
 
 **Why this target:**
-The submit api endpoint will check for an empty text string deterministically, so
-this criterion should be met consistently.
+An empty string is the cheapest way to make stylometry.py divide by zero (zero sentences, 
+zero tokens) — a 500 means the input guard sits inside a signal rather than in front of 
+the pipeline, and the same unguarded path will misbehave on short or malformed text in 
+production. A 400 proves the guard is at the boundary.
 
 ---
 
