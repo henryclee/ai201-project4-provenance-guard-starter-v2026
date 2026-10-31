@@ -51,7 +51,7 @@ A high confidence false positive is very costly, and must be rare.
 ---
 
 ## 2.
-The mean scores of 5 AI written pieces, and 5 human written pieces should by at
+The mean scores of 5 AI written pieces, and 5 human written pieces should vary by at
 least .4
 
 **Why this target:**
@@ -74,7 +74,8 @@ so that all 3 labels are used.
 For 5 of 5 valid appeals, the appeal always changes the status.
 
 **Why this target:**
-This target should be algorithmic, and thus should never fail.
+This appeal api endpoint should algorithmically append a new entry to the log, so
+this should never fail.
 
 ---
 
@@ -82,7 +83,8 @@ This target should be algorithmic, and thus should never fail.
 For 5 of 5 attempts, empty text returns a 400, not a 500.
 
 **Why this target:**
-This target should be algorithmic, and thus should never fail.
+The submit api endpoint will check for an empty text string deterministically, so
+this criterion should be met consistently.
 
 ---
 
