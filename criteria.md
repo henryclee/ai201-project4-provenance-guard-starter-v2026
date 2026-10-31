@@ -43,7 +43,7 @@ Two things worth knowing before you pick numbers:
 
 ---
 ## 1.
-Of 10 human written pieces, at most 1 is labeled high-confidence AI.
+Of 10 human-written test samples, at most 1 is labeled high-confidence AI.
 
 **Why this target:**
 A high confidence false positive is very costly, and must be rare.
@@ -55,18 +55,18 @@ The mean scores of 5 AI written pieces, and 5 human written pieces should vary b
 least .4
 
 **Why this target:**
-The mean of AI vs human written pieces must have enough separation so that the
-distributions have minimal overlap.
+The mean of AI vs human written pieces must have enough separation to be useful. I 
+chose a spread of .4 as a target to minimize the overlap of uncertainty.
 
 ---
 
 ## 3.
-Given 5 AI written, and 5 human written pieces, all 3 of the labels are returned 
-at least once.
+Given 3 human texts, 3 AI written texts, and 3 human-edited AI texts, all 3 of the 
+labels are returned at least once.
 
 **Why this target:**
-There should be enough difference in scoring between the pieces (1/2 AI, 1/2 human) 
-so that all 3 labels are used.
+The human-edited AI texts should sit at the boundary of being detected as AI written 
+or human written, so should rightly be classified as uncertain.
 
 ---
 
