@@ -593,20 +593,88 @@ The first one is slow while the model loads.
 <!-- Every attack with its outcome and a held-or-broke mark.
      `run_attacks.py --label before` produces the table. -->
 
-
+  [ 1/56] EV01   evasion           200   human    broke
+  [ 2/56] EV02   evasion           200   human    broke
+  [ 3/56] EV03   evasion           200   human    broke
+  [ 4/56] EV04   evasion           200   ai       held
+  [ 5/56] EV05   evasion           200   human    broke
+  [ 6/56] EV06   evasion           200   human    broke
+  [ 7/56] EV07   evasion           200   human    broke
+  [ 8/56] EV08   evasion           200   human    broke
+  [ 9/56] EV09   evasion           200   human    broke
+  [10/56] EV10   evasion           200   human    broke
+  [11/56] FP01   false_positive    200   ai       broke
+  [12/56] FP02   false_positive    200   ai       broke
+  [13/56] FP03   false_positive    200   ai       broke
+  [14/56] FP04   false_positive    200   ai       broke
+  [15/56] FP05   false_positive    200   ai       broke
+  [16/56] FP06   false_positive    200   ai       broke
+  [17/56] FP07   false_positive    200   ai       broke
+  [18/56] FP08   false_positive    200   human    held
+  [19/56] PI01   prompt_injection  200   human    held
+  [20/56] PI02   prompt_injection  200   human    held
+  [21/56] PI03   prompt_injection  200   human    held
+  [22/56] PI04   prompt_injection  200   human    held
+  [23/56] PI05   prompt_injection  200   human    held
+  [24/56] PI06   prompt_injection  200   human    held
+  [25/56] MF01   malformed         400   —        held
+  [26/56] MF02   malformed         400   —        held
+  [27/56] MF03   malformed         200   human    broke
+  [28/56] MF04   malformed         200   human    broke
+  [29/56] MF05   malformed         200   ai       broke
+  [30/56] MF06   malformed         200   ai       broke
+  [31/56] MF07   malformed         200   ai       broke
+  [32/56] MF08   malformed         200   ai       broke
+  [33/56] RQ01   malformed         400   —        held
+  [34/56] RQ02   malformed         200   human    broke
+  [35/56] RQ03   malformed         400   —        held
+  [36/56] RQ04   malformed         400   —        held
+  [37/56] RQ05   malformed         400   —        held
+  [38/56] RQ06   malformed         200   human    broke
+  [39/56] RQ07   malformed         400   —        held
+  [40/56] RQ08   malformed         400   —        held
+  [41/56] RQ09   malformed         400   —        held
+  [42/56] RQ10   malformed         400   —        held
+  [43/56] RQ11   malformed         400   —        held
+  [44/56] RQ12   malformed         400   —        held
+  [45/56] FL01_01 flood_same_creator 200   human    held
+  [46/56] FL01_02 flood_same_creator 200   human    held
+  [47/56] FL01_03 flood_same_creator 200   human    held
+  [48/56] FL01_04 flood_same_creator 200   human    held
+  [49/56] FL01_05 flood_same_creator 200   human    held
+  [50/56] FL01_06 flood_same_creator 200   human    held
+  [51/56] FL01_07 flood_same_creator 200   human    held
+  [52/56] FL01_08 flood_same_creator 200   human    held
+  [53/56] FL01_09 flood_same_creator 200   human    held
+  [54/56] FL01_10 flood_same_creator 200   human    held
+  [55/56] FL01_11 flood_same_creator 429   —        held
+  [56/56] FL01_12 flood_same_creator 429   —        held
 
 **Ten audit log entries from the run**
 
 <!-- Choose entries that show the interesting failures, not the ten easiest. -->
 
 ```json
-
+{"timestamp": "2026-11-05T00:27:14+00:00", "content_id": "8401563f-b8f2-4278-be3b-03ddd908246e", "creator_id": "attacker_FP01", "guess": "ai", "model_score": 0.6175, "style_score": 0.3721, "combined_score": 0.5888036976209314, "label": "placeholder", "status": "decided", "confidence": 0.1451410813149621, "word_count": 103, "style_tokens": 103, "style_available": true, "evidence_model": 0.5643, "evidence_style": 0.6273, "disagreement": 0.063, "agreement": 0.937}
+{"timestamp": "2026-11-05T00:27:14+00:00", "content_id": "d3edf278-af1f-43bc-98b5-223b53a44fcc", "creator_id": "attacker_FP04", "guess": "ai", "model_score": 0.8329, "style_score": 0.423, "combined_score": 0.7512783969917364, "label": "placeholder", "status": "decided", "confidence": 0.6572956976346511, "word_count": 68, "style_tokens": 68, "style_available": true, "evidence_model": 1.1797, "evidence_style": 0.7649, "disagreement": 0.4148, "agreement": 0.5852}
+{"timestamp": "2026-11-05T00:27:14+00:00", "content_id": "96ad3b28-b4e1-4b74-84cf-ed5deae29b84", "creator_id": "attacker_FP06", "guess": "ai", "model_score": 0.8814, "style_score": 0.3522, "combined_score": 0.6118805447453076, "label": "placeholder", "status": "decided", "confidence": 0.22948986743590977, "word_count": 64, "style_tokens": 64, "style_available": true, "evidence_model": 1.3183, "evidence_style": 0.5735, "disagreement": 0.7448, "agreement": 0.2552}
+{"timestamp": "2026-11-05T00:27:14+00:00", "content_id": "07c2393c-fd79-41c0-820e-18270005f962", "creator_id": "attacker_FP08", "guess": "human", "model_score": 0.3223, "style_score": 0.3423, "combined_score": 0.4365889322948916, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 8, "style_tokens": 8, "style_available": true, "evidence_model": -0.2791, "evidence_style": 0.5468, "disagreement": 0.8259, "agreement": 0.1741}
+{"timestamp": "2026-11-05T00:27:15+00:00", "content_id": "6dc95295-7eb1-4231-ac03-c33f634db522", "creator_id": "attacker_MF03", "guess": "human", "model_score": 0.0, "style_score": null, "combined_score": 0.0011125360328603227, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 3, "style_tokens": 3, "style_available": false, "evidence_model": -1.2, "evidence_style": null, "disagreement": 0.0, "agreement": 1.0}
+{"timestamp": "2026-11-05T00:27:15+00:00", "content_id": "848701ff-722f-418e-bfc3-5e0ed4417589", "creator_id": "attacker_MF05", "guess": "ai", "model_score": 0.9976, "style_score": null, "combined_score": 0.9900594521301628, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 1, "style_tokens": 1, "style_available": false, "evidence_model": 1.6503, "evidence_style": null, "disagreement": 0.0, "agreement": 1.0}
+{"timestamp": "2026-11-05T00:27:15+00:00", "content_id": "ab71c9b9-fc13-4868-aca6-b5595cbdf8eb", "creator_id": "attacker_MF07", "guess": "ai", "model_score": 0.9064, "style_score": null, "combined_score": 0.9723168322080543, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 17, "style_tokens": 0, "style_available": false, "evidence_model": 1.3897, "evidence_style": null, "disagreement": 0.0, "agreement": 1.0}
+{"timestamp": "2026-11-05T00:27:15+00:00", "content_id": "4167788b-dcb8-4c6a-99b3-e40c61866547", "creator_id": "unknown", "guess": "human", "model_score": 0.2395, "style_score": 0.65, "combined_score": 0.5, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 11, "style_tokens": 11, "style_available": true, "evidence_model": -0.5157, "evidence_style": 1.3784, "disagreement": 1.8941, "agreement": 0.0}
+{"timestamp": "2026-11-05T00:27:15+00:00", "content_id": "4a3cdf6f-40e6-4f01-a1b8-bfab8fe93569", "creator_id": "unknown", "guess": "human", "model_score": 0.0492, "style_score": null, "combined_score": 0.0019505055258997512, "label": "placeholder", "status": "decided", "confidence": 0.0, "word_count": 3, "style_tokens": 3, "style_available": false, "evidence_model": -1.0594, "evidence_style": null, "disagreement": 0.0, "agreement": 1.0}
+{"timestamp": "2026-11-05T00:27:15+00:00", "creator_id": "attacker_flood", "event": "rejected", "status": "rejected", "reason": "rate_limited", "limit": "10 per 1 minute"}
 ```
 
 **The single worst outcome** — the one I'd least want to explain to a writer
 whose work got caught by it:
 
+```json
+{"timestamp": "2026-11-05T00:27:14+00:00", "content_id": "83c891fc-3624-44a3-91c8-d3061b36ab79", "creator_id": "attacker_FP03", "guess": "ai", "model_score": 0.8051, "style_score": 0.4796, "combined_score": 0.8408730176382264, "label": "placeholder", "status": "decided", "confidence": 0.829683814940543, "word_count": 83, "style_tokens": 83, "style_available": true, "evidence_model": 1.1003, "evidence_style": 0.9178, "disagreement": 0.1824, "agreement": 0.8176}
+```
 
+If we are flagging a non-native English speaker writing carefully as AI with high confidence, that reflects a problem with the model.
 
 ---
 
