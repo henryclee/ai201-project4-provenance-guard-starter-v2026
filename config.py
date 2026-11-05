@@ -271,7 +271,9 @@ AI_THRESHOLD = 0.65
 # Your README has to say why your numbers and not others.
 
 # RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "0") == "1"
-RATE_LIMITING_ENABLED = True  # for unit 8, Milestone 1 — change to False to turn it off
+RATE_LIMITING_ENABLED = (
+    False  # for unit 8, Milestone 1 — change to False to turn it off
+)
 
 RATE_LIMIT_PER_MINUTE = 10
 RATE_LIMIT_PER_DAY = 200

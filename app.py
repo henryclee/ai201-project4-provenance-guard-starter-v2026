@@ -333,15 +333,16 @@ def submit():
         word_count,
         style_available,
     )
+    guess, label = scoring.score_to_label(combined_score)
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
-        guess=breakdown["guess"],
+        guess=guess,  # from breakdown["guess"],
         model_score=model_score,
         style_score=style_score,
         combined_score=combined_score,
-        label="placeholder",
+        label=label,
         status="decided",
         confidence=confidence,
         word_count=word_count,
@@ -361,9 +362,9 @@ def submit():
 
     response = {
         "content_id": content_id,
-        "guess": breakdown["guess"],
+        "guess": guess,  # from breakdown["guess"],
         "confidence": confidence,
-        "label": "placeholder",
+        "label": label,
         "model_score": model_score,
         "style_score": style_score,
         "combined_score": combined_score,

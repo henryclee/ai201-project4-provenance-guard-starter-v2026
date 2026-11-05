@@ -684,17 +684,408 @@ If we are flagging a non-native English speaker writing carefully as AI with hig
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. human-written samples | <=1/10 | 0/10 | 0/10 | 0/10 | MET |
+| 2. ai and human samples | >=0.4 | 0.051 | 0.051 | 0.051 | MISSED |
+| 3. label coverage | 3/3 | 2/3 | 2/3 | 2/3 | MISSED |
+| 5. appeal path | 5/5 | 5/5  | 5/5  | 5/5  | MET |
+| 5. empty text | 5/5 | 5/5 | 5/5 | 5/5 | MET |
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
-```json
+### human-written samples
+app.py::submit
 
+**Trial 1**
+
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.8017247568826692,
+    "model_score": 0.3379,
+    "style_score": 0.2395,
+    "label": "This appears to have been written by a human.",
+    "sent": "I fidgeted in the car, adjusting my SWAT gear. We parked, ready for a "
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.95,
+    "model_score": 0.3232,
+    "style_score": 0.0,
+    "label": "This appears to have been written by a human.",
+    "sent": "Your Christmas gift to me sits unopened on my desk, next to the one I "
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.95,
+    "model_score": 0.3325,
+    "style_score": 0.075,
+    "label": "This appears to have been written by a human.",
+    "sent": "A close friend died in 1999. After her funeral, grief's full weight in"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4329570033775598,
+    "model_score": 0.635,
+    "style_score": 0.166,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Finally, a succinct summary of my life, courtesy of the Scholarships E"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.95,
+    "model_score": 0.2383,
+    "style_score": 0.022,
+    "label": "This appears to have been written by a human.",
+    "sent": "Dear Journal, It is five minutes until midnight on Friday. We are havi"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.9458482141987881,
+    "model_score": 0.4038,
+    "style_score": 0.1583,
+    "label": "This appears to have been written by a human.",
+    "sent": "My high school had 4 guidance counselors. 3 were competent at their jo"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.9004153436069616,
+    "model_score": 0.463,
+    "style_score": 0.0365,
+    "label": "This appears to have been written by a human.",
+    "sent": "In looking at mine, I become aware that it is so recent in the stretch"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.843392977829802,
+    "model_score": 0.5037,
+    "style_score": 0.0778,
+    "label": "This appears to have been written by a human.",
+    "sent": "It turned out to be true. The face of the water, in time, became a won"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.02811610805277382,
+    "model_score": 0.7531,
+    "style_score": 0.2495,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Dear Dr. Huntington, My name is Georgina Geo, and I am writing to inqu"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.3917218235523799,
+    "model_score": 0.6071,
+    "style_score": 0.2562,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "As you probably know, the paper we use for our schoolwork and notes to"
+  }
+]
+```
+
+### ai and human samples
+app.py::submit
+
+**Trial 1**
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.8017247568826692,
+    "model_score": 0.3379,
+    "style_score": 0.2395,
+    "label": "This appears to have been written by a human.",
+    "sent": "I fidgeted in the car, adjusting my SWAT gear. We parked, ready for a "
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.9458482141987881,
+    "model_score": 0.4038,
+    "style_score": 0.1583,
+    "label": "This appears to have been written by a human.",
+    "sent": "My high school had 4 guidance counselors. 3 were competent at their jo"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.843392977829802,
+    "model_score": 0.5037,
+    "style_score": 0.0778,
+    "label": "This appears to have been written by a human.",
+    "sent": "It turned out to be true. The face of the water, in time, became a won"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.02811610805277382,
+    "model_score": 0.7531,
+    "style_score": 0.2495,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Dear Dr. Huntington, My name is Georgina Geo, and I am writing to inqu"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.3917218235523799,
+    "model_score": 0.6071,
+    "style_score": 0.2562,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "As you probably know, the paper we use for our schoolwork and notes to"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4228566651258606,
+    "model_score": 0.6091,
+    "style_score": 0.2406,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "When I was twelve I broke my wrist trying to prove I could jump a fenc"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.8695214550887325,
+    "model_score": 0.4965,
+    "style_score": 0.1159,
+    "label": "This appears to have been written by a human.",
+    "sent": "Genuinely cannot believe my school decided the best time to renovate t"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5408869651227974,
+    "model_score": 0.4068,
+    "style_score": 0.3369,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "In The Yellow Wallpaper, Gilman never lets the narrator name her own c"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.31800431029693943,
+    "model_score": 0.6658,
+    "style_score": 0.1848,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Dear Professor Nakamura, I am writing to ask whether you are accepting"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5500261239451194,
+    "model_score": 0.6002,
+    "style_score": 0.1009,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Municipal composting programs are one of the cheapest climate interven"
+  }
+]
+```
+
+### label coverage
+app.py::submit
+
+**Trial 1**
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.8017247568826692,
+    "model_score": 0.3379,
+    "style_score": 0.2395,
+    "label": "This appears to have been written by a human.",
+    "sent": "I fidgeted in the car, adjusting my SWAT gear. We parked, ready for a "
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.9458482141987881,
+    "model_score": 0.4038,
+    "style_score": 0.1583,
+    "label": "This appears to have been written by a human.",
+    "sent": "My high school had 4 guidance counselors. 3 were competent at their jo"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.843392977829802,
+    "model_score": 0.5037,
+    "style_score": 0.0778,
+    "label": "This appears to have been written by a human.",
+    "sent": "It turned out to be true. The face of the water, in time, became a won"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4228566651258606,
+    "model_score": 0.6091,
+    "style_score": 0.2406,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "When I was twelve I broke my wrist trying to prove I could jump a fenc"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.8695214550887325,
+    "model_score": 0.4965,
+    "style_score": 0.1159,
+    "label": "This appears to have been written by a human.",
+    "sent": "Genuinely cannot believe my school decided the best time to renovate t"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5408869651227974,
+    "model_score": 0.4068,
+    "style_score": 0.3369,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "In The Yellow Wallpaper, Gilman never lets the narrator name her own c"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.22765143126079057,
+    "model_score": 0.3446,
+    "style_score": 0.4127,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Frost's \"The Road Not Taken\" is usually read as a poem about choice, b"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.2442670866789824,
+    "model_score": 0.6875,
+    "style_score": 0.1968,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "I started running last year mostly because I couldn't sleep. It wasn't"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.020482439383164686,
+    "model_score": 0.5611,
+    "style_score": 0.5937,
+    "label": "There is not enough evidence to be certain if this is human or AI generated.",
+    "sent": "Remote work has become a proxy for an argument about trust, and that i"
+  }
+]
+```
+
+### appeal path
+app.py::appeal
+
+```bash
+$ curl -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{"content_id": "2a0ed74f-2277-40d9-8441-89d96d2aabfc", "reasoning": "appeal text"}'
+```
+```json
+{
+  "message": "content_id 2a0ed74f-2277-40d9-8441-89d96d2aabfc has been marked under review. Thank you for your appeal."
+}
+```
+
+```bash
+$ curl -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{"content_id": "b3182bff-ccfb-4f4e-a228-d60747620e5a", "reasoning": "appeal text"}'
+```
+```json
+{
+  "message": "content_id b3182bff-ccfb-4f4e-a228-d60747620e5a has been marked under review. Thank you for your appeal."
+}
+```
+
+```bash
+$ curl -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{"content_id": "1550e640-e99a-495a-9f28-769ed88cea48", "reasoning": "appeal text"}'
+```
+```json
+{
+  "message": "content_id 1550e640-e99a-495a-9f28-769ed88cea48 has been marked under review. Thank you for your appeal."
+}
+```
+
+```bash
+$ curl -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{"content_id": "27f36995-fefa-48e4-b2b8-e1574054f2ad", "reasoning": "appeal text"}'
+```
+```json
+{
+  "message": "content_id 27f36995-fefa-48e4-b2b8-e1574054f2ad has been marked under review. Thank you for your appeal."
+}
+```
+
+```bash
+$ curl -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{"content_id": "5bad44e0-e00a-4f98-8ddb-c326b7efb165", "reasoning": "appeal text"}'
+```
+```json
+{
+  "message": "content_id 5bad44e0-e00a-4f98-8ddb-c326b7efb165 has been marked under review. Thank you for your appeal."
+}
+```
+
+### empty text
+app.py::submit
+
+**Trial 1**
+
+```json
+[
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  }
+]
 ```
 
 **Diagnoses**
