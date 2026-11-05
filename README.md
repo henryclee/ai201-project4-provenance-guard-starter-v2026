@@ -1104,7 +1104,22 @@ app.py::submit
 
      Look for a pattern. Five failures on one signal is one problem, not five. -->
 
+Criterion 2 - Human vs AI written texts - MISSED
 
+Diagnosis - The criterion was aiming to see a separation in the combined scores between human and AI generated
+texts to be at least 0.4. The actual mean difference in the scenarios was 0.051. This suggests that, at least
+on the texts in the scenarios, the model is essentially unable to make any distinction between the human and AI
+generated texts. I suspect that this is related to the AI model that was used to generate the AI generated text --
+modern large language models have become sophisticated enough that they do not emit text that is obviously AI 
+generated, or at least that can be so easily detected by the primitive detector in this project. Ultimately, this is
+reflected in signal 1 and signal 2. There does not appear to be any clear differentiation between the human and AI
+among the scenario texts.
+
+Criterion 3 - Label coverage
+
+Diagnosis - in the scenario texts, the range of the combined scores is from 0.1415 and 0.5554, so none of them
+reach the criteria range to trigger the AI label. So, at least for these sample texts, the scores are too tightly clustered / 
+the boundaries are too far apart for all 3 labels to be expressed in the scenario.
 
 ---
 
