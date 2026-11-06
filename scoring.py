@@ -101,8 +101,10 @@ def combine_signals(
       2. AVERAGE the two evidences by weight. Weights now act on comparable units, so
          0.5/0.5 means equal trust rather than equal-looking decimals.
       3. DAMP the average back toward the coin-flip point in proportion to how far
-         apart the signals sit. Two perfectly opposed signals land on exactly 0.500:
-         two methods disagreeing IS uncertainty, and it needs no special-case branch.
+         apart the signals sit. Two signals a full DISPERSION_FULL apart land on exactly
+         0.500: two methods disagreeing IS uncertainty, and it needs no special-case
+         branch. The damp is symmetric — it shrinks distance from 0.5, so it moderates
+         verdicts in both directions rather than pushing toward "human".
       4. SQUASH once, at the end, onto 0-1.
 
     `style_available=False` drops style rather than scoring it. Absent evidence is not
@@ -143,8 +145,10 @@ def score_breakdown(
         pooled = (
             config.WEIGHT_MODEL_SIGNAL * e_model + config.WEIGHT_STYLE_SIGNAL * e_style
         ) / w_total
-        # Distance apart, in evidence units. Two independent methods that land a full
-        # unit apart have told you opposite things about the same text.
+        # Distance apart, in evidence units. What counts as "opposite" is DISPERSION_FULL:
+        # at that separation the two methods sit at opposite ends of what they measure, and
+        # the pooled verdict is discarded. (This is the constant this unit moved 1.0 -> 2.0,
+        # so "a full unit apart" no longer means total contradiction — it now costs half.)
         dispersion = abs(e_model - e_style)
         n_signals = 2
     else:

@@ -98,14 +98,61 @@ WEIGHT_STYLE_SIGNAL = 0.5
 
 
 # Pooling. The weighted mean of the two evidences is damped toward the coin-flip
-# point in proportion to how far apart the signals sit — one full unit of
-# disagreement (DISPERSION_FULL) pins the verdict at exactly 0.500, because two
-# methods disagreeing IS uncertainty and needs no special-case branch. Damping the
+# point in proportion to how far apart the signals sit — disagreement of
+# DISPERSION_FULL units pins the verdict at exactly 0.500, because two methods
+# disagreeing IS uncertainty and needs no special-case branch. Damping the
 # EVIDENCE rather than clamping probabilities is what keeps the clearly-human and
 # clearly-AI ends distinguishable instead of saturating both at 0.0 and 1.0.
+#
+# ⚠️ UNIT 8, MILESTONE 5 — THE ONE CHANGED NUMBER IN THIS UNIT: 1.0 -> 2.0.
+#
+# Mean signal disagreement, measured over the scenario texts and logged decisions in
+# logs/audit.jsonl (values are |evidence_model - evidence_style|, in evidence units):
+#
+#     10 genuine human texts        0.321   (mean agreement 0.679)
+#     criterion 2 human half        0.377   (mean agreement 0.623)
+#     criterion 2 AI half           0.465   (mean agreement 0.535)
+#     criterion 3 coverage set      0.502   (mean agreement 0.498)
+#     10 evasion attacks            0.786   (mean agreement 0.365)  <-- most disagreed
+#
+# Disagreement is therefore HIGHEST exactly where AI is present, and at 1.0 a routine
+# 0.5-0.8 unit gap deleted 50-80% of the pooled evidence. Mind the direction, because the
+# damping is SYMMETRIC: it pulls toward the coin flip, so it drags a verdict DOWN only when
+# the pooled evidence sits ABOVE 0.5 — which is true of the texts this unit needed to catch
+# (EV04 pooled 0.896, EV10 1.137, coverage text 9 0.815) and of the formal-human false
+# positives. The seven evasion texts pooling BELOW 0.5 went the other way, further into
+# "human", which is why the evasion group's mean score barely moved (0.438 -> 0.443) even
+# though individual members moved by as much as 0.249. Full breakdown in README, section
+# "The Improvement". Two logged examples:
+#
+#     EV10  e_model 1.598, e_style 0.675, dispersion 0.922 -> agreement 0.078. The
+#           model signal read 0.979, its highest reading in the whole set, and the
+#           combined score came out 0.549: one thousandth under the accusation bar.
+#     label-coverage text 9 (human-edited AI): e_model 0.403, e_style 1.226,
+#           dispersion 0.823 -> agreement 0.177 -> combined 0.555, the best score any
+#           scenario text ever produced, still 0.095 short of AI_THRESHOLD. Which is
+#           why criterion 3 could only ever reach 2 of 3 labels: the ceiling sat below
+#           the line, so no submission in the scenario could have crossed it.
+#
+# At 2.0, ordinary disagreement (0.5-0.8 units) costs 25-40% of the evidence instead of 50-80%.
+# Where the value came from: the widest gap any PROSE text in the log produces is 1.97 (EV01);
+# the only input above it is the flood probe's "word word word..." junk at 2.50. So 2.0 sits
+# above every real argument the two signals ever have and below the one input that is not prose
+# at all — real disagreement keeps most of its weight, and a genuinely opposed pair is still
+# erased. Checking that the case this damping exists for still behaves:
+#
+#     flood junk  e_model -1.118, e_style 1.378, dispersion 2.496 -> agreement 0.000, score
+#                 0.500, certainty 0.000 at BOTH settings (2.496 >= DISPERSION_FULL either way)
+#     prose       e_model -0.516, e_style 1.378, dispersion 1.894 -> 0.500 at 1.0, 0.496 at
+#                 2.0, certainty 0.000 either way
+#
+# 0.496 rather than exactly 0.500 is the honest cost of the change: 0.004 off a coin flip, with
+# the certainty still pinned at zero. Stating it because "still behaves" is not the same as
+# "behaves identically", and the difference is the kind of thing a later unit trips over.
 COMBINE_CROSSOVER = 0.5  # evidence separating a human-ward verdict from AI-ward
 COMBINE_SLOPE = 4.0  # how hard the pooled evidence is squashed onto 0-1
-DISPERSION_FULL = 1.0  # disagreement (in evidence units) that zeroes the verdict
+DISPERSION_FULL = 2.0  # disagreement (in evidence units) that zeroes the verdict
+#                                       ^ was 1.0 — see the measurement block above
 
 # The verdict bar sits at the crossover PLUS a leniency bias, so calling something AI
 # means clearing 0.55 rather than 0.50. That 0.05 is the Milestone 1 false-positive
@@ -270,10 +317,16 @@ AI_THRESHOLD = 0.65
 # an hour, and a script sending a thousand variations to map your thresholds.
 # Your README has to say why your numbers and not others.
 
-# RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "0") == "1"
-RATE_LIMITING_ENABLED = (
-    False  # for unit 8, Milestone 1 — change to False to turn it off
-)
+# UNIT 8, MILESTONE 1 — ON. This was switched back to a hard `False` in the unit 7
+# Milestone 4 commit (the flood evidence in results/flood_2026-11-04_1910.md was
+# captured while it was True), which is why GET /health reported limiting off.
+# Restored here so the attack set's flood_same_creator family can be judged honestly.
+# Escape hatch kept from the starter: start the SERVICE with `AI201_RATE_LIMITS=0`
+# (`AI201_RATE_LIMITS=0 python app.py`) to run the three-trial evaluation without the
+# per-creator budget interfering, since the appeal-path and empty-text scenarios each submit
+# five bodies under one shared creator_id. The flag is read once at import, so it must be
+# set on the server process — setting it on the run_eval.py client changes nothing.
+RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "1") == "1"
 
 RATE_LIMIT_PER_MINUTE = 10
 RATE_LIMIT_PER_DAY = 200
